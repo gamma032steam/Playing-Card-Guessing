@@ -77,6 +77,8 @@ cardsHigher target guess = let maxrank = maximum (map (rank) guess) in
 
 -- Takes in a number of target cards then sets up the first guess and GameState
 initialGuess :: Int -> ([Card], GameState)
+    -- Choose from different suits, and ranks 13(n+1) ranks apart
+    -- TODO: Rank choosing
 initialGuess n = (take n [Card s R7 | s <- [minBound..maxBound]::[Suit]], 
                   GameState [[]])
 
@@ -102,6 +104,17 @@ commonCards target ((Card suit rank):guesses) correct
         commonCards target guesses ((Card suit rank):correct)
     | otherwise = commonCards target guesses correct
     
+-- Generates all possible combinations of n cards from a single deck, that is,
+-- without duplicate cards
+cardCombos :: Int -> [[Card]]
+-- List of all possible cards, put in a list of lists for joining
+cardCombos 1 = map (\x -> [x]) ([minBound..maxBound]::[Card])
+-- Join combinations of n-1 with the set of all possible cards
+cardCombos n = [y:x |
+                x <- cardCombos (n-1), 
+                y <- ([minBound..maxBound]::[Card]),
+                -- Prevent duplicates and only add to half of the lists
+                not(y `elem` x), y >= x!!0]
 
 -- these are currently not used!
 -- Finds the minimum rank in a list of cards
