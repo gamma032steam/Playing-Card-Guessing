@@ -86,11 +86,17 @@ initialGuess n = (take n [Card s R7 | s <- [minBound..maxBound]::[Suit]],
 
 -- NEXT GUESS
 
+-- Calculates the best next guess
 nextGuess :: ([Card],GameState) -> (Int,Int,Int,Int,Int) -> ([Card],GameState)
-nextGuess (guess, (GameState possible)) _ = (possible!!0, 
+nextGuess (guess, (GameState oldPossible)) lastFeedback =
+                let possible = feedbackFilter oldPossible guess lastFeedback in 
+                (possible!!0, 
                 GameState (drop 1 possible))
 
-
+-- Filters out possible solutions based on the feedback from the previous guess
+feedbackFilter :: [[Card]] -> [Card] -> (Int, Int, Int, Int, Int) -> [[Card]]
+feedbackFilter candidates guess lastFeedback = 
+    filter (\x -> feedback x guess == lastFeedback) candidates
 
 -- __________________
 -- GENERAL HELPER FUNCTIONS
