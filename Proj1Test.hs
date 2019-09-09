@@ -71,6 +71,7 @@ main = do
 loop :: Selection -> Selection -> GameState -> Int -> IO ()
 loop answer guess other guesses = do
     putStrLn $ "Your guess " ++ show guesses ++ ":  " ++ show guess
+    putStrLn $ "Your state " ++ (show $ take 10 (possible other))
     if validSelection guess && length answer == length guess then do
         let result = feedback answer guess
         putStrLn $ "My answer:  " ++ show result

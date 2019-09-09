@@ -13,8 +13,8 @@ module Proj1 where
 import Card
 import Data.List
 
--- Explain this datatype!
-data GameState = GameState [[Card]]
+-- Holds information for the guessing algorithm between steps.
+data GameState = GameState {possible::[[Card]]}
 
 instance Show GameState where
     show gs = ""
@@ -79,15 +79,16 @@ cardsHigher target guess = let maxrank = maximum (map (rank) guess) in
 initialGuess :: Int -> ([Card], GameState)
     -- Choose from different suits, and ranks 13(n+1) ranks apart
     -- TODO: Rank choosing
-initialGuess n = (take n [Card s R7 | s <- [minBound..maxBound]::[Suit]], 
-                  GameState [[]])
+initialGuess n = (take n [Card s R7 | s <- [minBound..maxBound]::[Suit]],
+    -- To start, any combination is possible
+                  GameState (cardCombos n))
 
 
 -- NEXT GUESS
 
 nextGuess :: ([Card],GameState) -> (Int,Int,Int,Int,Int) -> ([Card],GameState)
-nextGuess _ _ = ([], 
-                GameState [[]])
+nextGuess (guess, (GameState possible)) _ = (possible!!0, 
+                GameState (drop 1 possible))
 
 
 
