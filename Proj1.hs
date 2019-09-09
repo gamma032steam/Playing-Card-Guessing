@@ -15,6 +15,9 @@ import Data.List
 
 -- Explain this datatype!
 data GameState = GameState [[Card]]
+
+instance Show GameState where
+    show gs = ""
      
 -- __________________
 -- CORE FUNCTIONS
@@ -74,7 +77,7 @@ cardsHigher target guess = let maxrank = maximum (map (rank) guess) in
 
 -- Takes in a number of target cards then sets up the first guess and GameState
 initialGuess :: Int -> ([Card], GameState)
-initialGuess n = ([], 
+initialGuess n = (take n [Card s R7 | s <- [minBound..maxBound]::[Suit]], 
                   GameState [[]])
 
 
