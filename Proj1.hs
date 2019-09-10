@@ -12,11 +12,13 @@ module Proj1 (feedback, initialGuess, nextGuess, GameState) where
 import Card
 import Data.List
 
--- The difference between the index of the rank type and its true number
-target_sample = 25
+-- Sample size of possibilities to use when testing which guess will remove
+-- the most possibilities.
+-- Higher takes longer but generates better guesses.
+target_sample = 200
 
 -- Holds information for the guessing algorithm between steps.
--- possible: The groups of target cards possible at this step
+-- possible: The guesses of target cards possible at this step
 data GameState = GameState {possible::[[Card]]}
 
 instance Show GameState where
