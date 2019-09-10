@@ -16,10 +16,10 @@ import sys
 GUESS_REGEX = r"in (.*) guesses"
 QUALITY_REGEX = r"Approximate quality = (.*)%"
 ACCURACY = 2
-TESTS = 10
+TESTS = 30
 CARD_COUNT = 4
 SEED = 1337
-TIMEOUT = 10
+TIMEOUT = 100
 COMPILE_TARGET = "Proj1test"
 
 SINGLE_TEST_SUMMARY = ">> Results: No. of Guesses: {1} | Quality: {2} | Execution Time: {3}s\n"

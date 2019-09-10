@@ -13,12 +13,15 @@ module Proj1 where
 import Card
 import Data.List
 
+-- The difference between the index of the rank type and its true number
+target_sample = 25
+
 -- Holds information for the guessing algorithm between steps.
 -- possible: The groups of target cards possible at this step
 data GameState = GameState {possible::[[Card]]}
 
 instance Show GameState where
-    show gs = show $ (possible gs)
+    show gs = show $ (length $ possible gs)
      
 -- __________________
 -- CORE FUNCTIONS
@@ -37,14 +40,10 @@ feedback target guess = (length (commonCards target guess []),
 
 -- Takes in a number of target cards then sets up the first guess and GameState
 initialGuess :: Int -> ([Card], GameState)
-    -- Choose from different suits, and ranks 13(n+1) ranks apart
-    -- TODO: Rank choosing
-initialGuess n = (take n 
-                [Card s (toEnum r::Rank) | 
-                -- Loop through the suits
-                s <- [minBound..maxBound]::[Suit],
-                -- Evenly spread ranks
-                r <- uniformDistribute (fromIntegral n) 1 13],
+-- Choose from different suits, and ranks 13(n+1) ranks apart
+initialGuess n = (distributeSuits n 
+                 (map (\x -> toEnum (x-1)::Rank)
+                 (uniformDistribute (fromIntegral n) 1 13)),
     -- To start, any combination is possible
                   GameState (cardCombos n))
 
@@ -97,6 +96,15 @@ cardsHigher :: [Card] -> [Card] -> Int
 cardsHigher target guess = let maxrank = maximum (map (rank) guess) in
     length(filter(\mycard -> (rank mycard) > maxrank) target)
 
+-- INITIAL GUESS HELPERS
+
+-- Given a list of ranks, create cards spread across all the suits
+distributeSuits :: Int -> [Rank] -> [Card]
+distributeSuits 0 _ = []
+distributeSuits n ranks = let suits = [Club, Spade, Heart, Diamond] in
+    (Card (suits!!(n-1)) (ranks!!(n-1))):(distributeSuits (n-1) ranks)
+
+
 -- NEXT GUESS HELPERS
 
 -- Filters solutions rendered impossible based on the last guesses' feedback
@@ -106,32 +114,34 @@ feedbackFilter candidates guess lastFeedback =
 
 -- Finds the guess that would remove the most possible targets
 bestGuess :: [[Card]] -> [Card]
-bestGuess possible = bestGuessHelp possible possible ([], 10000000) 
+bestGuess possible = bestGuessHelp (take target_sample possible) possible Nothing
 
-bestGuessHelp :: [[Card]] -> [[Card]] -> ([Card], Int) -> [Card]
-bestGuessHelp _ [] (currBest, _) = currBest 
-bestGuessHelp possible (currGuess:guesses) (currBest, bestScore)
-    | score < bestScore = bestGuessHelp possible guesses (currGuess, score)
-    | otherwise = bestGuessHelp possible guesses (currBest, bestScore)
-    where score =  average  (map (\poss -> length ((feedbackFilter possible currGuess) (feedback poss currGuess))) possible)
-    --where score = length $ feedbackFilter possible currGuess (feedback currGuess)
--- for every possible
--- for every possible
--- length feedback filter
+bestGuessHelp :: [[Card]] -> [[Card]] -> Maybe ([Card], Int) -> [Card]
+bestGuessHelp possible (currGuess:guesses) Nothing =
+    bestGuessHelp possible guesses (Just(currGuess, scoreGuess possible currGuess))
+bestGuessHelp _ [] (Just (currBest, _)) = currBest
+bestGuessHelp possible (currGuess:guesses) (Just (currBest, bestScore))
+    | score < bestScore = bestGuessHelp possible guesses (Just (currGuess, score))
+    | otherwise = bestGuessHelp possible guesses (Just(currBest, bestScore))
+    where score = scoreGuess possible currGuess 
+    
+scoreGuess :: [[Card]] -> [Card] -> Int
+scoreGuess possible guess = average (map (\poss -> length ((feedbackFilter possible guess) (feedback poss guess))) possible)
+
 
 -- __________________
 -- GENERAL HELPER FUNCTIONS
 -- __________________
 
 -- Averages a list of ints
-average :: Foldable a => a Int -> Int
+average :: [Int] -> Int
 average list = (sum list) `div` (length list)
 
 -- Distributes k numbers between l and h (h>l), wherein each number has an
 -- equal distance to each other and the bounds.
 uniformDistribute :: (RealFrac a1, Enum a1, Integral a2) => 
                       a1 -> a1 -> a1 -> [a2]
-uniformDistribute n l h = let step = ((h- l+1)/(n+1)) in 
+uniformDistribute n l h = let step = ((h-l+1)/(n+1)) in 
     take (round n) $ map floor [l + n*step | n <- [1..n], l+n*step <= h]
 
 -- Returns the cards common to two lists
