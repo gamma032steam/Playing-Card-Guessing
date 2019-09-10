@@ -15,7 +15,7 @@ import Data.List
 -- Sample size of possibilities to use when testing which guess will remove
 -- the most possibilities.
 -- Higher takes longer but generates better guesses.
-target_sample = 200
+target_sample = 25
 
 -- Holds information for the guessing algorithm between steps.
 -- possible: The guesses of target cards possible at this step
