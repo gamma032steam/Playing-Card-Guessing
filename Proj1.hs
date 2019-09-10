@@ -52,9 +52,10 @@ initialGuess n = (take n
 nextGuess :: ([Card],GameState) -> (Int,Int,Int,Int,Int) -> ([Card],GameState)
 nextGuess (guess, (GameState oldPossible)) lastFeedback =
                 -- Consider feedback
-                let possible = feedbackFilter oldPossible guess lastFeedback in 
-                (possible!!0, 
-                GameState (drop 1 possible))
+                let possible = feedbackFilter oldPossible guess lastFeedback
+                    bestNext = bestGuess possible in 
+                (bestNext, 
+                 GameState possible)
 
 -- __________________
 -- HELPER FUNCTIONS
@@ -103,9 +104,28 @@ feedbackFilter :: [[Card]] -> [Card] -> (Int, Int, Int, Int, Int) -> [[Card]]
 feedbackFilter candidates guess lastFeedback = 
     filter (\x -> feedback x guess == lastFeedback) candidates
 
+-- Finds the guess that would remove the most possible targets
+bestGuess :: [[Card]] -> [Card]
+bestGuess possible = bestGuessHelp possible possible ([], 10000000) 
+
+bestGuessHelp :: [[Card]] -> [[Card]] -> ([Card], Int) -> [Card]
+bestGuessHelp _ [] (currBest, _) = currBest 
+bestGuessHelp possible (currGuess:guesses) (currBest, bestScore)
+    | score < bestScore = bestGuessHelp possible guesses (currGuess, score)
+    | otherwise = bestGuessHelp possible guesses (currBest, bestScore)
+    where score =  average  (map (\poss -> length ((feedbackFilter possible currGuess) (feedback poss currGuess))) possible)
+    --where score = length $ feedbackFilter possible currGuess (feedback currGuess)
+-- for every possible
+-- for every possible
+-- length feedback filter
+
 -- __________________
 -- GENERAL HELPER FUNCTIONS
 -- __________________
+
+-- Averages a list of ints
+average :: Foldable a => a Int -> Int
+average list = (sum list) `div` (length list)
 
 -- Distributes k numbers between l and h (h>l), wherein each number has an
 -- equal distance to each other and the bounds.
@@ -133,12 +153,3 @@ cardCombos n = [y:x |
                 y <- ([minBound..maxBound]::[Card]),
                 -- Prevent duplicates and only add to half of the lists
                 not(y `elem` x), y >= x!!0]
-
--- these are currently not used!
--- Finds the minimum rank in a list of cards
-minrank :: [Card] -> Rank
-minrank cards = minimum (map (rank) cards)
-
--- Finds the maximum rank in a list of cards
-maxrank :: [Card] -> Rank
-maxrank cards = maximum (map (rank) cards)
