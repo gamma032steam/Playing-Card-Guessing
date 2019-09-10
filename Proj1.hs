@@ -7,8 +7,7 @@
 -- nextGuess until the cards are a complete match. For all functions,
 -- we assume that at least one card has been picked.
 
---module Proj1 (feedback, initialGuess, nextGuess, GameState) where
-module Proj1 where
+module Proj1 (feedback, initialGuess, nextGuess, GameState) where
 
 import Card
 import Data.List
@@ -112,21 +111,28 @@ feedbackFilter :: [[Card]] -> [Card] -> (Int, Int, Int, Int, Int) -> [[Card]]
 feedbackFilter candidates guess lastFeedback = 
     filter (\x -> feedback x guess == lastFeedback) candidates
 
--- Finds the guess that would remove the most possible targets
+-- Calls the appropriate algorithm to find the best guess
 bestGuess :: [[Card]] -> [Card]
-bestGuess possible = bestGuessHelp (take target_sample possible) possible Nothing
+bestGuess possible = findBest (take target_sample possible) possible Nothing
 
-bestGuessHelp :: [[Card]] -> [[Card]] -> Maybe ([Card], Int) -> [Card]
-bestGuessHelp possible (currGuess:guesses) Nothing =
-    bestGuessHelp possible guesses (Just(currGuess, scoreGuess possible currGuess))
-bestGuessHelp _ [] (Just (currBest, _)) = currBest
-bestGuessHelp possible (currGuess:guesses) (Just (currBest, bestScore))
-    | score < bestScore = bestGuessHelp possible guesses (Just (currGuess, score))
-    | otherwise = bestGuessHelp possible guesses (Just(currBest, bestScore))
+-- Looks through all possibilities, and chooses the card which will remove
+-- the most possible solutions
+findBest :: [[Card]] -> [[Card]] -> Maybe ([Card], Int) -> [Card]
+-- Initialize the search
+findBest possible (currGuess:guesses) Nothing =
+    findBest possible guesses (Just(currGuess, scoreGuess possible currGuess))
+findBest _ [] (Just (currBest, _)) = currBest
+-- Look through each possible guess to find the best
+findBest possible (currGuess:guesses) (Just (currBest, bestScore))
+    | score < bestScore = findBest possible guesses (Just (currGuess, score))
+    | otherwise = findBest possible guesses (Just(currBest, bestScore))
     where score = scoreGuess possible currGuess 
-    
+
+-- Find the number of cards we can't remove for a given guess
 scoreGuess :: [[Card]] -> [Card] -> Int
-scoreGuess possible guess = average (map (\poss -> length ((feedbackFilter possible guess) (feedback poss guess))) possible)
+scoreGuess possible guess = average (
+    map (\poss -> length ((feedbackFilter possible guess) 
+    (feedback poss guess))) possible)
 
 
 -- __________________
