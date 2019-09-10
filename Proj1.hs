@@ -1,5 +1,5 @@
 -- Author: Matthew Lui 993333
--- Purpose Complete implementation of a card guessing game.
+-- Purpose: Implementation of a card guessing game.
 
 -- A number of cards a randomly picked from a single deck. initialGuess makes
 -- an attempt at choosing the same cards. Feedback provides information as
@@ -14,10 +14,11 @@ import Card
 import Data.List
 
 -- Holds information for the guessing algorithm between steps.
+-- possible: The groups of target cards possible at this step
 data GameState = GameState {possible::[[Card]]}
 
 instance Show GameState where
-    show gs = ""
+    show gs = show $ (possible gs)
      
 -- __________________
 -- CORE FUNCTIONS
@@ -89,11 +90,14 @@ initialGuess n = (take n [Card s R7 | s <- [minBound..maxBound]::[Suit]],
 -- Calculates the best next guess
 nextGuess :: ([Card],GameState) -> (Int,Int,Int,Int,Int) -> ([Card],GameState)
 nextGuess (guess, (GameState oldPossible)) lastFeedback =
+                -- Consider feedback
                 let possible = feedbackFilter oldPossible guess lastFeedback in 
                 (possible!!0, 
                 GameState (drop 1 possible))
 
--- Filters out possible solutions based on the feedback from the previous guess
+-- NEXT GUESS HELPERS
+
+-- Filters solutions rendered impossible based on the last guesses' feedback
 feedbackFilter :: [[Card]] -> [Card] -> (Int, Int, Int, Int, Int) -> [[Card]]
 feedbackFilter candidates guess lastFeedback = 
     filter (\x -> feedback x guess == lastFeedback) candidates
@@ -101,6 +105,11 @@ feedbackFilter candidates guess lastFeedback =
 -- __________________
 -- GENERAL HELPER FUNCTIONS
 -- __________________
+
+-- Distributes k numbers between l and h (h>l), wherein each number has an
+-- equal distance to each other and the bounds.
+uniformDistribute :: Int -> Int -> Int -> [Int]
+unformDistribute n l h = 
 
 -- Returns the cards common to two lists
 commonCards :: [Card] -> [Card] -> [Card] -> [Card]
@@ -114,7 +123,6 @@ commonCards target ((Card suit rank):guesses) correct
 -- Generates all possible combinations of n cards from a single deck, that is,
 -- without duplicate cards
 cardCombos :: Int -> [[Card]]
--- List of all possible cards, put in a list of lists for joining
 cardCombos 1 = map (\x -> [x]) ([minBound..maxBound]::[Card])
 -- Join combinations of n-1 with the set of all possible cards
 cardCombos n = [y:x |
