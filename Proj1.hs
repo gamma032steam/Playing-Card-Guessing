@@ -24,8 +24,6 @@ instance Show GameState where
 -- CORE FUNCTIONS
 -- __________________
 
--- FEEDBACK
-
 -- Takes a target and a guess and returns five feedback numbers
 -- In corresponding order, they are: (1) the number correct, (2) cards lower
 -- than the lowest rank, (3) cards in the same rank, (4)  cards higher than the
@@ -36,7 +34,32 @@ feedback target guess = (length (commonCards target guess []),
                         ranksCorrect target guess 0, 
                         cardsHigher target guess, 
                         suitsCorrect target guess 0)
-                        
+
+-- Takes in a number of target cards then sets up the first guess and GameState
+initialGuess :: Int -> ([Card], GameState)
+    -- Choose from different suits, and ranks 13(n+1) ranks apart
+    -- TODO: Rank choosing
+initialGuess n = (take n 
+                [Card s (toEnum r::Rank) | 
+                -- Loop through the suits
+                s <- [minBound..maxBound]::[Suit],
+                -- Evenly spread ranks
+                r <- uniformDistribute (fromIntegral n) 1 13],
+    -- To start, any combination is possible
+                  GameState (cardCombos n))
+
+-- Calculates the best next guess
+nextGuess :: ([Card],GameState) -> (Int,Int,Int,Int,Int) -> ([Card],GameState)
+nextGuess (guess, (GameState oldPossible)) lastFeedback =
+                -- Consider feedback
+                let possible = feedbackFilter oldPossible guess lastFeedback in 
+                (possible!!0, 
+                GameState (drop 1 possible))
+
+-- __________________
+-- HELPER FUNCTIONS
+-- __________________
+
 -- FEEDBACK HELPERS
     
 -- Returns the number of correct ranks, tracking the total on each call
@@ -73,28 +96,6 @@ cardsHigher :: [Card] -> [Card] -> Int
 cardsHigher target guess = let maxrank = maximum (map (rank) guess) in
     length(filter(\mycard -> (rank mycard) > maxrank) target)
 
-
--- INITIAL GUESS
-
--- Takes in a number of target cards then sets up the first guess and GameState
-initialGuess :: Int -> ([Card], GameState)
-    -- Choose from different suits, and ranks 13(n+1) ranks apart
-    -- TODO: Rank choosing
-initialGuess n = (take n [Card s R7 | s <- [minBound..maxBound]::[Suit]],
-    -- To start, any combination is possible
-                  GameState (cardCombos n))
-
-
--- NEXT GUESS
-
--- Calculates the best next guess
-nextGuess :: ([Card],GameState) -> (Int,Int,Int,Int,Int) -> ([Card],GameState)
-nextGuess (guess, (GameState oldPossible)) lastFeedback =
-                -- Consider feedback
-                let possible = feedbackFilter oldPossible guess lastFeedback in 
-                (possible!!0, 
-                GameState (drop 1 possible))
-
 -- NEXT GUESS HELPERS
 
 -- Filters solutions rendered impossible based on the last guesses' feedback
@@ -108,8 +109,10 @@ feedbackFilter candidates guess lastFeedback =
 
 -- Distributes k numbers between l and h (h>l), wherein each number has an
 -- equal distance to each other and the bounds.
-uniformDistribute :: Int -> Int -> Int -> [Int]
-unformDistribute n l h = 
+uniformDistribute :: (RealFrac a1, Enum a1, Integral a2) => 
+                      a1 -> a1 -> a1 -> [a2]
+uniformDistribute n l h = let step = ((h- l+1)/(n+1)) in 
+    take (round n) $ map floor [l + n*step | n <- [1..n], l+n*step <= h]
 
 -- Returns the cards common to two lists
 commonCards :: [Card] -> [Card] -> [Card] -> [Card]
